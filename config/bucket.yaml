@@ -1,0 +1,8 @@
+apiVersion: storage.cnrm.cloud.google.com/v1beta1
+kind: StorageBucket
+metadata:
+  name: mcp-lud-wew-gitops-test-bucket
+  annotations:
+    cnrm.cloud.google.com/project-id: "mcp-lud-wew"
+spec:
+  location: europe-west3
