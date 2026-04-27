@@ -1,0 +1,12 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeAddress
+metadata:
+  name: nginx-static-internal-ip
+  namespace: nginx-apps
+  annotations:
+    cnrm.cloud.google.com/project-id: "mcp-lud-wew"
+spec:
+  location: europe-west3
+  addressType: INTERNAL
+  subnetworkRef:
+    external: "projects/mcp-lud-wew/regions/europe-west3/subnetworks/default-gke-nodes"
