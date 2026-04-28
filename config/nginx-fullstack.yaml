@@ -21,7 +21,7 @@ spec:
   addressType: INTERNAL
   subnetworkRef:
     # Replace YOUR_SUBNET_NAME with your actual dev cluster subnet
-    external: "projects/mcp-lud-wew/regions/europe-west3/subnetworks/YOUR_SUBNET_NAME"
+    external: "projects/mcp-lud-wew/regions/europe-west3/subnetworks/default-gke-nodes"
 
 ---
 # 3. The Internal Load Balancer (Kubernetes Service)
