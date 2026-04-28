@@ -1,0 +1,132 @@
+# 1. The Dedicated Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-apps
+  labels:
+    # This label tells Cloud Service Mesh to automatically inject the Envoy proxy sidecars into your pods
+    istio-injection: enabled
+
+---
+# 2. The Statically Reserved Internal IP (Config Connector)
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeAddress
+metadata:
+  name: nginx-static-internal-ip
+  namespace: nginx-apps
+  annotations:
+    cnrm.cloud.google.com/project-id: "mcp-lud-wew"
+spec:
+  location: europe-west3
+  addressType: INTERNAL
+  subnetworkRef:
+    # Replace YOUR_SUBNET_NAME with your actual dev cluster subnet
+    external: "projects/mcp-lud-wew/regions/europe-west3/subnetworks/YOUR_SUBNET_NAME"
+
+---
+# 3. The Internal Load Balancer (Kubernetes Service)
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-internal-lb
+  namespace: nginx-apps
+  annotations:
+    networking.gke.io/load-balancer-type: "Internal"
+    # This automatically grabs the IP reserved by the ComputeAddress above
+    networking.gke.io/load-balancer-ip-addresses: "nginx-static-internal-ip"
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+
+---
+# 4. The Stable Application (Version 1)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-v1
+  namespace: nginx-apps
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: nginx
+        version: v1
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.24
+        ports:
+        - containerPort: 80
+
+---
+# 5. The Canary Application (Version 2)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-v2
+  namespace: nginx-apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: nginx
+        version: v2
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+---
+# 6. The Mesh Destination Rule (Defining the Subsets)
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nginx-destinations
+  namespace: nginx-apps
+spec:
+  host: nginx-internal-lb
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+
+---
+# 7. The Mesh Virtual Service (The Traffic Split Logic)
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: nginx-traffic-split
+  namespace: nginx-apps
+spec:
+  hosts:
+  - nginx-internal-lb
+  http:
+  - route:
+    - destination:
+        host: nginx-internal-lb
+        subset: v1
+      weight: 90
+    - destination:
+        host: nginx-internal-lb
+        subset: v2
+      weight: 10
