@@ -100,7 +100,8 @@ metadata:
   name: nginx-destinations
   namespace: nginx-apps
 spec:
-  host: nginx-internal-lb
+  # Updated to FQDN
+  host: nginx-internal-lb.nginx-apps.svc.cluster.local 
   subsets:
   - name: v1
     labels:
@@ -110,7 +111,6 @@ spec:
       version: v2
 
 ---
-# 7. The Mesh Virtual Service (The Traffic Split Logic)
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
@@ -118,14 +118,18 @@ metadata:
   namespace: nginx-apps
 spec:
   hosts:
+  # Added both the short name and the FQDN so it catches all traffic
   - nginx-internal-lb
+  - nginx-internal-lb.nginx-apps.svc.cluster.local
   http:
   - route:
     - destination:
-        host: nginx-internal-lb
+        # Updated to FQDN
+        host: nginx-internal-lb.nginx-apps.svc.cluster.local
         subset: v1
       weight: 90
     - destination:
-        host: nginx-internal-lb
+        # Updated to FQDN
+        host: nginx-internal-lb.nginx-apps.svc.cluster.local
         subset: v2
       weight: 10
