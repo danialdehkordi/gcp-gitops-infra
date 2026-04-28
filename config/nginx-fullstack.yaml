@@ -4,8 +4,7 @@ kind: Namespace
 metadata:
   name: nginx-apps
   labels:
-    # This label tells Cloud Service Mesh to automatically inject the Envoy proxy sidecars into your pods
-    istio-injection: enabled
+    istio.io/rev: asm-managed
 
 ---
 # 2. The Statically Reserved Internal IP (Config Connector)
