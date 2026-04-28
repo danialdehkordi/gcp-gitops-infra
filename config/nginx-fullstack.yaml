@@ -32,17 +32,16 @@ metadata:
   namespace: nginx-apps
   annotations:
     networking.gke.io/load-balancer-type: "Internal"
-    # This automatically grabs the IP reserved by the ComputeAddress above
     networking.gke.io/load-balancer-ip-addresses: "nginx-static-internal-ip"
 spec:
   type: LoadBalancer
   selector:
     app: nginx
   ports:
-  - port: 80
+  - name: http
+    port: 80
     targetPort: 80
     protocol: TCP
-
 ---
 # 4. The Stable Application (Version 1)
 apiVersion: apps/v1
