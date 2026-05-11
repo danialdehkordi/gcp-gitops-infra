@@ -7,31 +7,29 @@ metadata:
     istio.io/rev: asm-managed
 
 ---
-# 2. The Statically Reserved Internal IP (Config Connector)
+# 2. The Statically Reserved External IP (Config Connector)
 apiVersion: compute.cnrm.cloud.google.com/v1beta1
 kind: ComputeAddress
 metadata:
-  name: nginx-static-internal-ip
+  name: nginx-static-external-ip  # Renamed for clarity
   namespace: nginx-apps
   annotations:
     cnrm.cloud.google.com/project-id: "mcp-lud-wew"
 spec:
   location: europe-west3
-  addressType: INTERNAL
-  subnetworkRef:
-    # Replace YOUR_SUBNET_NAME with your actual dev cluster subnet
-    external: "projects/mcp-lud-wew/regions/europe-west3/subnetworks/default-gke-nodes"
-
+  addressType: EXTERNAL           # Changed from INTERNAL
 ---
-# 3. The Internal Load Balancer (Kubernetes Service)
+# 3. The External Load Balancer (Kubernetes Service)
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-internal-lb
+  name: nginx-external-lb         # Renamed for clarity
   namespace: nginx-apps
   annotations:
-    networking.gke.io/load-balancer-type: "Internal"
-    networking.gke.io/load-balancer-ip-addresses: "nginx-static-internal-ip"
+    # The 'load-balancer-type: Internal' annotation MUST be deleted.
+    
+    # Point to the newly named KCC external IP resource
+    networking.gke.io/load-balancer-ip-addresses: "nginx-static-external-ip"
 spec:
   type: LoadBalancer
   selector:
@@ -117,9 +115,8 @@ metadata:
   namespace: nginx-apps
 spec:
   hosts:
-  # Added both the short name and the FQDN so it catches all traffic
-  - nginx-internal-lb
-  - nginx-internal-lb.nginx-apps.svc.cluster.local
+  - nginx-external-lb
+  - nginx-external-lb.nginx-apps.svc.cluster.local
   http:
   - route:
     - destination:
