@@ -3,10 +3,9 @@ kind: MonitoringMetricDescriptor
 metadata:
   name: nginx-requests-processed
   namespace: nginx-apps
-  annotations:
-    # Ties the metric descriptor to your specific GCP project
-    cnrm.cloud.google.com/project-id: "mcp-lud-wew"
 spec:
+  projectRef:
+    external: "mcp-lud-wew"
   # All custom metrics in GCP must start with custom.googleapis.com/
   type: custom.googleapis.com/nginx/requests_processed
   displayName: "Nginx Processed Requests"
